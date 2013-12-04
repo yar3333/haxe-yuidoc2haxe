@@ -276,6 +276,53 @@ class Main
 					}
 				}
 				
+				if (item.itemtype == "method" && !item.isStatic())
+				{
+					var superClass = getMostSuperClassWithItem(root, klass, item.name);
+					var superItem = getKlassItem(root, superClass, item.name, false);
+					
+					var childClasses = getChildClasses(root, superClass.name);
+					for (childClass in childClasses)
+					{
+						var childItem = getKlassItem(root, childClass, item.name, false);
+						if (childItem != null)
+						{
+							if ((superItem.params != null ? superItem.params.length : 0) < (childItem.params != null ? childItem.params.length : 0))
+							{
+								if (superItem.params == null) superItem.params = [];
+								for (i in superItem.params.length...childItem.params.length)
+								{
+									var p = childItem.params[i];
+									if (!p.isOptional()) p.setOptional(true);
+									superItem.params.push(p);
+								}
+							}
+							
+							// sync params names and types
+							if (childItem.params != null)
+							{
+								for (i in 0...childItem.params.length)
+								{
+									var p0 = superItem.params[i];
+									var p1 = childItem.params[i];
+									
+									if (p0.type != p1.type)
+									{
+										p0.type = "Dynamic";
+										p1.type = "Dynamic";
+									}
+									
+									if (p0.isOptional() || p1.isOptional())
+									{
+										p0.setOptional(true);
+										p1.setOptional(true);
+									}
+								}
+							}
+						}
+					}
+				}
+				
 				switch (item.itemtype)
 				{
 					case "property":
@@ -561,5 +608,43 @@ class Main
 		var klass : Klass = Reflect.field(root.classes, klassName);
 		if (klass == null) return klassName;
 		return (klass.module != curModule && klass.module != null && klass.module != "" ? klass.module.toLowerCase() + "." : "") + klassName;
+	}
+	
+	static function getChildClasses(root:YuiDoc, klassName:String) : Array<Klass>
+	{
+		var r = [];
+		
+		for (className in Reflect.fields(root.classes))
+		{
+			var klass : Klass = Reflect.field(root.classes, className);
+			if (isParentOf(root, klassName, klass))
+			{
+				r.push(klass);
+			}
+		}
+		
+		return r;
+	}
+	
+	static function getMostSuperClassWithItem(root:YuiDoc, klass:Klass, itemName:String) : Klass
+	{
+		var r = klass;
+		while (klass.getExtends() != null)
+		{
+			klass = Reflect.field(root.classes, klass.getExtends());
+			if (getKlassItem(root, klass, itemName, false) != null) r = klass;
+		}
+		return r;
+		
+	}
+	
+	static function isParentOf(root:YuiDoc, parentKlassName:String, klass:Klass) : Bool
+	{
+		while (klass.getExtends() != null)
+		{
+			if (klass.getExtends() == parentKlassName) return true;
+			klass = Reflect.field(root.classes, klass.getExtends());
+		}
+		return false;
 	}
 }

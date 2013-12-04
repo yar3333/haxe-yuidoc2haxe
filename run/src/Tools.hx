@@ -47,4 +47,9 @@ class ParamTools
 	{
 		return Reflect.hasField(param, "optional") && Reflect.field(param, "optional") || ~/^\s*optional\b/i.match(param.description);
 	}
+	
+	public static function setOptional(param:Param, value:Bool)
+	{
+		Reflect.setField(param, "optional", value);
+	}
 }
