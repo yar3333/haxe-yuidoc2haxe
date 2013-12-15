@@ -27,8 +27,8 @@ class Main
 		}
 		
 		var parser = new CmdOptions();
-		parser.add("srcJsonFilePath", "out/data.json", [ "-src", "--source" ], "Source yuidoc json file path. Default is 'out/data.json'.");
 		parser.add("destDir", "library", null, "Output directory.");
+		parser.add("srcJsonFilePath", "out/data.json", [ "-src", "--source" ], "Source yuidoc json file path. Default is 'out/data.json'.");
 		parser.add("removePathPrefix", "", [ "-pprefix", "--remove-path-prefix" ], "Source files path prefix to remove.");
 		parser.addRepeatable("typeMap", String, [ "-tm", "--type-map" ], "Map basic types in form 'from-to'. For example: Boolean-Bool");
 		parser.add("publicPrefix", false, [ "--public-prefix" ], "Write 'public' before class member declarations.");
@@ -38,10 +38,10 @@ class Main
 		parser.add("noDescriptions", false, [ "-nd", "--no-descriptions" ], "Do not generate descriptions.");
 		parser.add("nativePackage", "", [ "-np", "--native-package" ], "Native package for @:native meta.");
 		parser.add("generateDeprecated", false, [ "--generate-deprecated" ], "Generate deprecated classes/members.");
-		parser.add("noNewLineOnBracket", false, [ "--no-new-line-on-bracket" ], "Ouput code style. Generate '{' on the same line.");
-		parser.add("lessSpaces", false, [ "--less-spaces" ], "Ouput code style. Generate less spaces.");
-		parser.add("sortItems", false, [ "--sort-items" ], "Ouput code style. Sort items alphabetically.");
-		parser.add("constructorFirst", false, [ "--constructor-first" ], "Ouput code style. Place constructor first.");
+		parser.add("noNewLineOnBracket", false, [ "--no-new-line-on-bracket" ], "Output code style. Generate '{' on the same line.");
+		parser.add("lessSpaces", false, [ "--less-spaces" ], "Output code style. Generate less spaces.");
+		parser.add("sortItems", false, [ "--sort-items" ], "Output code style. Sort items alphabetically.");
+		parser.add("constructorFirst", false, [ "--constructor-first" ], "Output code style. Place constructor first.");
 		
 		if (args.length > 0)
 		{
@@ -67,7 +67,7 @@ class Main
 		else
 		{
 			Lib.println("yuidoc2haxe - generated haxe externs from the yuidoc's json.");
-			Lib.println("Usage: yuidoc2haxe [<options>] <outputDirectory>");
+			Lib.println("Usage: yuidoc2haxe [<options>] <destDir>");
 			Lib.println("  Where options:");
 			Lib.println(parser.getHelpMessage("    "));
 		}
@@ -157,7 +157,7 @@ class Main
 					else
 					{
 						eventClassName = "Dynamic";
-						Lib.println("WARNING: Unknow params for event '" + item.name + "' (" + item.file + " : " + item.line + ")");
+						Lib.println("Warning: unknow params for event '" + item.name + "' (" + item.file + " : " + item.line + ")");
 					}
 				}
 				
@@ -399,7 +399,7 @@ class Main
 			{
 				if (![ "Array" ].has(superKlassName))
 				{
-					Lib.println("Warning: class '" + superKlassName + "' is not found.");
+					Lib.println("Warning: class '" + superKlassName + "' is not found");
 				}
 				return;
 			}
@@ -468,6 +468,12 @@ class Main
 		if (ltype == "function") return "Dynamic";
 		if (ltype == "array") return "Array<Dynamic>";
 		if (ltype == "*") return "Dynamic";
+		
+		var reTypedArray = ~/^array\[(.*)\]$/;
+		if (reTypedArray.match(ltype))
+		{
+			return "Array<" + getHaxeType(root, curModule, typeMap, reTypedArray.matched(1)) + ">";
+		}
 		
 		return type;
 	}
@@ -550,7 +556,7 @@ class Main
 		var ret = item.getReturn();
 		if (ret == null)
 		{
-			Lib.println("Warning: unknow return for method = " + item.name);
+			Lib.println("Warning: unknow return for method '" + item.name + "'");
 		}
 		if (ret != null && ret.type == null)
 		{
