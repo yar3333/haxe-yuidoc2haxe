@@ -143,7 +143,7 @@ class Main
 			if (sortItems) items.methods.sort(function(a, b) return a.name<b.name ? -1 : (a.name>b.name ? 1 : 0));
 			var methodsCode = items.methods.map(function(item) return getMethodCode(root, items.properties.concat(items.methods), item, itemDeclarationPrefx, space, typeMap)).join("\n");
 			
-			var eventsCode = items.events.map(function(item)
+			var eventsCode = items.events.filter(function(item) return !isEventOverride(root, item)).map(function(item)
 			{
 				var eventClassName = item.getClass() + capitalize(item.name) + "Event";
 				
@@ -482,7 +482,7 @@ class Main
 	{
 		if (params != null)
 		{
-			return "(" + params.map(function(p) return (p.isOptional() ? "?" : "") + p.name + ":" + getHaxeType(root, curModule, typeMap, p.type)).join(", ") + ")";
+			return "(" + params.map(function(p) return (p.isOptional() ? "?" : "") + fixKeyword(p.name) + ":" + getHaxeType(root, curModule, typeMap, p.type)).join(", ") + ")";
 		}
 		return "()";
 	}
@@ -564,6 +564,9 @@ class Main
 		}
 		try
 		{
+			
+			var retHaxeType = ret != null ? getHaxeType(root, item.module, typeMap, ret.type) : "Void";
+			
 			if (item.isStatic() || !items.exists(function(i) return i.name == item.name && i.isStatic()))
 			{
 				return getDescriptionCode(item) 
@@ -571,7 +574,7 @@ class Main
 					+ (isMethodOverride(root, item) ? "override " : "") 
 					+ itemDeclarationPrefx 
 					+ (item.isStatic() ? "static " : "") 
-					+ "function " + item.name + getParamsCode(root, item.module, typeMap, item.params) + space + ":" + space + (ret != null ? getHaxeType(root, item.module, typeMap, ret.type) : "Void") + ";";
+					+ "function " + item.name + getParamsCode(root, item.module, typeMap, item.params) + space + ":" + space + retHaxeType + ";";
 			}
 			else
 			{
@@ -579,14 +582,33 @@ class Main
 					+ "\t" 
 					+ itemDeclarationPrefx 
 					+ "inline "
-					+ "function " + item.name + "_" + getParamsCode(root, item.module, typeMap, item.params) + space + ":" + space + (ret != null ? getHaxeType(root, item.module, typeMap, ret.type) : "Void")
-					+ " return Reflect.callMethod(this, \"" + item.name + "\", [ " + (item.params != null ? item.params.map(function(p) return p.name).join(", ") : "") + " ]);";
+					+ "function " + item.name + "_" + getParamsCode(root, item.module, typeMap, item.params) + space + ":" + space + retHaxeType
+					+ (retHaxeType != "Void" ? " return" : "")
+					+ " Reflect.callMethod(this, \"" + item.name + "\", [ " + (item.params != null ? item.params.map(function(p) return p.name).join(", ") : "") + " ]);";
 			}
 		}
 		catch (e:Dynamic)
 		{
 			throw "Unknow param type for method = " + item;
 		}
+	}
+	
+	static function isEventOverride(root:YuiDoc, item:Item) : Bool
+	{
+		var klass : Klass = Reflect.field(root.classes, item.getClass());
+		var superKlassName = klass.getExtends();
+		while (superKlassName != null && superKlassName != "")
+		{
+			var superKlass : Klass = Reflect.field(root.classes, superKlassName);
+			
+			if (superKlass == null) return false;
+			
+			var superItem = getKlassItem(root, superKlass, item.name, item.isStatic());
+			if (superItem != null && superItem.itemtype == "event") return true;
+			
+			superKlassName = superKlass.getExtends();
+		}
+		return false;
 	}
 	
 	static function isMethodOverride(root:YuiDoc, item:Item) : Bool
@@ -602,7 +624,7 @@ class Main
 			if (superKlass == null) return false;
 			
 			var superItem = getKlassItem(root, superKlass, item.name, item.isStatic());
-			if (superItem != null) return true;
+			if (superItem != null && superItem.itemtype != "event") return true;
 			
 			superKlassName = superKlass.getExtends();
 		}
@@ -652,5 +674,11 @@ class Main
 			klass = Reflect.field(root.classes, klass.getExtends());
 		}
 		return false;
+	}
+	
+	static function fixKeyword(s:String) : String
+	{
+		var keywords = [ "override" ];
+		return keywords.indexOf(s) < 0 ? s : s + "_";
 	}
 }
