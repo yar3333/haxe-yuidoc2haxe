@@ -136,6 +136,8 @@ class Main
 			file = destDir + file;
 			
 			var items = getKlassItems(root, klass, removePathPrefix, ignoreFiles, ignoreItems, generateDeprecated);
+			items.properties = uniqueItems(items.properties);
+			items.methods = uniqueItems(items.methods);
 			
 			var eventsDeclarationCode = items.events.filter(function(item) return item.params != null).map(function(item)
 			{
@@ -478,6 +480,7 @@ class Main
 		
 		var ltype = type.toLowerCase();
 		
+		if (ltype == "string") return "String";
 		if (ltype == "boolean") return "Bool";
 		if (ltype == "number") return "Float";
 		if (ltype == "object") return "Dynamic";
@@ -755,5 +758,22 @@ class Main
 				throw "Apply specified types: can't found class item '" + parts[0] + "." + parts[1] + "'. Check your command-line option '--specify-type'.";
 			}
 		}
+	}
+	
+	static function uniqueItems(items:Array<Item>) : Array<Item>
+	{
+		var i = items.length - 1; while (i > 0)
+		{
+			var prevItems = items.slice(0, i);
+			if (prevItems.exists(function(item) return items[i].name == item.name))
+			{
+				log.trace("Warning item '" + items[i].name + "' defined several times. Used last define.");
+				var len = items.length;
+				items = prevItems.filter(function(item) return items[i].name != item.name).concat(items.slice(i));
+				i -= len - items.length;
+			}
+			i--;
+		}
+		return items;
 	}
 }
