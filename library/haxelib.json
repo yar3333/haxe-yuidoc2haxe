@@ -4,8 +4,8 @@
   "tags": ["utility"],
   "description": "Haxe extern classes generating tool. Use yuidoc's json as a source.",
   "contributors": ["yar3333"],
-  "releasenote": "Some fixes.",
-  "version": "1.0.3",
+  "releasenote": "Added option --specify-type. Improve logging. Generate workaround to static and none-static same-named members fix. Avoid problem with several same-named vars/methods.",
+  "version": "1.0.4",
   "url": "https://bitbucket.org/yar3333/haxe-yuidoc2haxe",
   "dependencies": {}
 }
