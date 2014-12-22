@@ -572,8 +572,8 @@ class Main
 				+ "\t" 
 				+ itemDeclarationPrefx 
 				+ "var " + item.name + "_(get, set)" + space + ":" + space + haxeType + ";\n"
-				+ "inline function get_" + item.name + "_()" + space + ":" + space + haxeType + " return Reflect.field(this, \"" + item.name + "\");\n"
-				+ "inline function set_" + item.name + "_(v:" + haxeType + ")" + space + ":" + space + haxeType + " return Reflect.setField(this, \"" + item.name + "\", v);";
+				+ "\tinline function get_" + item.name + "_()" + space + ":" + space + haxeType + " return Reflect.field(this, \"" + item.name + "\");\n"
+				+ "\tinline function set_" + item.name + "_(v:" + haxeType + ")" + space + ":" + space + haxeType + " { Reflect.setField(this, \"" + item.name + "\", v); return v; }";
 		}
 	}
 	
