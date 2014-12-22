@@ -1,5 +1,6 @@
 package ;
 
+import stdlib.Std;
 import hant.CmdOptions;
 import haxe.CallStack;
 import haxe.io.Path;
@@ -38,6 +39,7 @@ class Main
 		parser.add("noDescriptions", false, [ "-nd", "--no-descriptions" ], "Do not generate descriptions.");
 		parser.add("nativePackage", "", [ "-np", "--native-package" ], "Native package for @:native meta.");
 		parser.add("generateDeprecated", false, [ "--generate-deprecated" ], "Generate deprecated classes/members.");
+		parser.addRepeatable("specifyTypes", String, [ "-st", "--specify-type" ], "Specify method's param type. Example: CreateJS.hitTest.x-Float");
 		parser.add("noNewLineOnBracket", false, [ "--no-new-line-on-bracket" ], "Output code style. Generate '{' on the same line.");
 		parser.add("lessSpaces", false, [ "--less-spaces" ], "Output code style. Generate less spaces.");
 		parser.add("sortItems", false, [ "--sort-items" ], "Output code style. Sort items alphabetically.");
@@ -58,6 +60,7 @@ class Main
 				, options.get("noDescriptions")
 				, options.get("nativePackage")
 				, options.get("generateDeprecated")
+				, options.get("specifyTypes")
 				, options.get("noNewLineOnBracket")
 				, options.get("lessSpaces")
 				, options.get("sortItems")
@@ -85,6 +88,7 @@ class Main
 		, noDescriptions : Bool
 		, nativePackage : String
 		, generateDeprecated : Bool
+		, _specifyTypes : Array<String>
 		, noNewLineOnBracket : Bool
 		, lessSpaces : Bool
 		, sortItems : Bool
@@ -95,6 +99,7 @@ class Main
 		removePathPrefix = Path.addTrailingSlash(removePathPrefix.replace("\\", "/"));
 		var typeMap = new Map<String,String>(); for (s in _typeMap) typeMap.set(s.split("-")[0], s.split("-")[1]);
 		ignoreFiles = ignoreFiles.map(function(p) return p.replace("\\", "/"));
+		var specifyTypes = new Map<String,String>(); for (s in _specifyTypes) specifyTypes.set(s.split("-")[0], s.split("-")[1]);
 		var bracket = noNewLineOnBracket ? " {\n" : "\n{";
 		var space = lessSpaces ? "" : " ";
 		
@@ -102,6 +107,9 @@ class Main
 		
 		var fileContent = File.getContent(srcJsonFilePath);
 		var root : YuiDoc = Json.parse(fileContent);
+		
+		applySpecifyTypes(root, specifyTypes);
+		
 		for (className in Reflect.fields(root.classes))
 		{
 			Lib.print(className);
@@ -680,5 +688,54 @@ class Main
 	{
 		var keywords = [ "override" ];
 		return keywords.indexOf(s) < 0 ? s : s + "_";
+	}
+	
+	static function applySpecifyTypes(root:YuiDoc, specifyTypes:Map<String, String>)
+	{
+		trace("applySpecifyTypes: " + Std.array(specifyTypes.keys()));
+		
+		for (key in specifyTypes.keys())
+		{
+			var parts = key.split(".");
+			if (parts.length < 2 || parts.length > 3) throw "Apply specified types: invalid value '" + parts + "' for --specify-type option.";
+			var klass : Klass = Reflect.field(root.classes, parts[0]);
+			if (klass == null) throw "Apply specified types: class '" + parts[0] + "' is not found. Check your --specify-type option.";
+			var item = getKlassItem(root, klass, parts[1], false);
+			if (item == null) getKlassItem(root, klass, parts[1], true);
+			if (item != null)
+			{
+				if (parts.length == 2)
+				{
+					if (item.itemtype == "method")
+					{
+						var ret = item.getReturn();
+						if (ret == null) { ret = { description:null, type:null }; item.setReturn(ret); }
+						ret.type = specifyTypes.get(key);
+					}
+					else
+					{
+						item.type = specifyTypes.get(key);
+					}
+				}
+				else
+				{
+					var found = false;
+					for (param in item.params)
+					{
+						if (param.name == parts[2])
+						{
+							found = true;
+							param.type = specifyTypes.get(key);
+							break;
+						}
+					}
+					if (!found) throw "Apply specified types: can't found '" + key + "' for --specify-type option.";
+				}
+			}
+			else
+			{
+				throw "Apply specified types: can't found class item '" + parts[0] + "." + parts[1] + "'. Check your command-line option '--specify-type'.";
+			}
+		}
 	}
 }
