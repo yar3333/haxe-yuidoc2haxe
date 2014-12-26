@@ -174,7 +174,8 @@ class Main
 					}
 				}
 				
-				return getDescriptionCode(item) + "\t" + itemDeclarationPrefx + (item.isStatic() ? "static " : "") + "inline function add" + capitalize(item.name) + "EventListener(handler:" + eventClassName + "->Void) : Dynamic return addEventListener(\"" + item.name + "\", handler);";
+				return getDescriptionCode(item) + "\t" + itemDeclarationPrefx + (item.isStatic() ? "static " : "") + "inline function add"    + capitalize(item.name) + "EventListener(handler:" + eventClassName + "->Void, ?useCapture:Bool) : Dynamic return addEventListener(\""    + item.name + "\", handler, useCapture);\n"
+												+ "\t" + itemDeclarationPrefx + (item.isStatic() ? "static " : "") + "inline function remove" + capitalize(item.name) + "EventListener(handler:" + eventClassName + "->Void, ?useCapture:Bool) : Dynamic return removeEventListener(\"" + item.name + "\", handler, useCapture);";
 			}
 			).join("\n");
 			
