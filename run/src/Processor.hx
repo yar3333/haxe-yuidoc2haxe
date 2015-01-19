@@ -187,16 +187,14 @@ class Processor
 	
 	function applySpecifyTypes()
 	{
-		trace("applySpecifyTypes: " + Std.array(specifyTypes.keys()));
-		
 		for (key in specifyTypes.keys())
 		{
 			var parts = key.split(".");
 			if (parts.length < 2 || parts.length > 3) throw "Apply specified types: invalid value '" + parts + "' for --specify-type option.";
 			var klass : Klass = Reflect.field(root.classes, parts[0]);
 			if (klass == null) throw "Apply specified types: class '" + parts[0] + "' is not found. Check your --specify-type option.";
-			var item = getKlassItem( klass, parts[1], false);
-			if (item == null) getKlassItem(klass, parts[1], true);
+			var item = getKlassItem(klass, parts[1], false);
+			if (item == null) item = getKlassItem(klass, parts[1], true);
 			if (item != null)
 			{
 				if (parts.length == 2)

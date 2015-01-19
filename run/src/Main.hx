@@ -19,7 +19,7 @@ class Main
 		var parser = new CmdOptions();
 		parser.add("destDir", "library", null, "Output directory.");
 		parser.add("srcJsonFilePath", "out/data.json", [ "-src", "--source" ], "Source yuidoc json file path. Default is 'out/data.json'.");
-		parser.add("removePathPrefix", "", [ "-pprefix", "--remove-path-prefix" ], "Source files path prefix to remove.");
+		parser.add("removePathPrefix", "", [ "-pprefix", "--remove-path-prefix" ], "Source files path prefix to remove. Specify here base source directory (same as for yuidoc).");
 		parser.addRepeatable("typeMap", String, [ "-tm", "--type-map" ], "Map basic types in form 'from-to'. For example: Boolean-Bool");
 		parser.add("publicPrefix", false, [ "--public-prefix" ], "Write 'public' before class member declarations.");
 		parser.addRepeatable("ignoreFiles", String, [ "-ifile", "--ignore-file" ], "Path to source file to ignore.");
@@ -29,7 +29,7 @@ class Main
 		parser.add("nativePackage", "", [ "-np", "--native-package" ], "Native package for @:native meta.");
 		parser.add("applyNativePackage", false, [ "-anp", "--apply-native-package" ], "Use native package specified by '-np' as haxe package and don't generate @:native meta.");
 		parser.add("generateDeprecated", false, [ "--generate-deprecated" ], "Generate deprecated classes/members.");
-		parser.addRepeatable("specifyTypes", String, [ "-st", "--specify-type" ], "Specify method's param type. Example: CreateJS.hitTest.x-Float");
+		parser.addRepeatable("specifyTypes", String, [ "-st", "--specify-type" ], "Specify method argument or return type. Example: DisplayObject.hitTest.x-Float");
 		parser.add("noNewLineOnBracket", false, [ "--no-new-line-on-bracket" ], "Output code style. Generate '{' on the same line.");
 		parser.add("lessSpaces", false, [ "--less-spaces" ], "Output code style. Generate less spaces.");
 		parser.add("sortItems", false, [ "--sort-items" ], "Output code style. Sort items alphabetically.");
