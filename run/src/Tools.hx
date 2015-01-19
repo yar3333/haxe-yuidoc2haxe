@@ -1,5 +1,3 @@
-package ;
-
 class KlassTools
 {
 	public static function getExtends(klass:Klass) : String
