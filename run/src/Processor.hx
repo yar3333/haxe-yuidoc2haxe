@@ -13,13 +13,29 @@ class Processor
 	static var log = new Log();
 	
 	var root : YuiDoc;
+	var destDir : String;
+	var removePathPrefix : String;
+	var typeMap : Map<String,String>;
+	var itemDeclarationPrefx : String;
+	var ignoreFiles : Array<String>;
+	var ignoreClasses : Array<String>;
+	var ignoreItems : Array<String>;
+	var noDescriptions : Bool;
+	var nativePackage : String;
+	var generateDeprecated : Bool;
+	var specifyTypes : Map<String,String>;
+	var bracket : String;
+	var space : String;
+	var sortItems : Bool;
+	var constructorFirst : Bool;
+	var applyNativePackage : Bool;
 
 	public function new
 	(
 		  srcJsonFilePath : String
 		, destDir : String
 		, removePathPrefix : String
-		, _typeMap : Array<String>
+		, typeMap : Array<String>
 		, publicPrefix : Bool
 		, ignoreFiles : Array<String>
 		, ignoreClasses : Array<String>
@@ -27,7 +43,7 @@ class Processor
 		, noDescriptions : Bool
 		, nativePackage : String
 		, generateDeprecated : Bool
-		, _specifyTypes : Array<String>
+		, specifyTypes : Array<String>
 		, noNewLineOnBracket : Bool
 		, lessSpaces : Bool
 		, sortItems : Bool
@@ -35,20 +51,28 @@ class Processor
 		, applyNativePackage : Bool
 	)
 	{
-		destDir = Path.addTrailingSlash(destDir.replace("\\", "/"));
-		removePathPrefix = Path.addTrailingSlash(removePathPrefix.replace("\\", "/"));
-		var typeMap = new Map<String,String>(); for (s in _typeMap) typeMap.set(s.split("-")[0], s.split("-")[1]);
-		ignoreFiles = ignoreFiles.map(function(p) return p.replace("\\", "/"));
-		var specifyTypes = new Map<String,String>(); for (s in _specifyTypes) specifyTypes.set(s.split("-")[0], s.split("-")[1]);
-		var bracket = noNewLineOnBracket ? " {\n" : "\n{";
-		var space = lessSpaces ? "" : " ";
-		
-		var itemDeclarationPrefx = publicPrefix ? "public " : "";
-		
-		var fileContent = File.getContent(srcJsonFilePath);
-		root = Json.parse(fileContent);
-		
-		applySpecifyTypes(specifyTypes);
+		this.root = Json.parse(File.getContent(srcJsonFilePath));
+		this.destDir = Path.addTrailingSlash(destDir.replace("\\", "/"));
+		this.removePathPrefix = Path.addTrailingSlash(removePathPrefix.replace("\\", "/"));
+		this.typeMap = new Map<String,String>(); for (s in typeMap) this.typeMap.set(s.split("-")[0], s.split("-")[1]);
+		this.itemDeclarationPrefx = publicPrefix ? "public " : "";
+		this.ignoreFiles = ignoreFiles.map(function(p) return p.replace("\\", "/"));
+		this.ignoreClasses = ignoreClasses;
+		this.ignoreItems = ignoreItems;
+		this.noDescriptions = noDescriptions;
+		this.nativePackage = nativePackage;
+		this.generateDeprecated = generateDeprecated;
+		this.specifyTypes = new Map<String,String>(); for (s in specifyTypes) this.specifyTypes.set(s.split("-")[0], s.split("-")[1]);
+		this.bracket = noNewLineOnBracket ? " {\n" : "\n{";
+		this.space = lessSpaces ? "" : " ";
+		this.sortItems = sortItems;
+		this.constructorFirst = constructorFirst;
+		this.applyNativePackage = applyNativePackage;
+	}
+	
+	public function run()
+	{
+		applySpecifyTypes();
 		
 		for (className in Reflect.fields(root.classes))
 		{
@@ -72,7 +96,7 @@ class Processor
 			file = Path.withoutExtension(file) + ".hx";
 			file = destDir + file;
 			
-			var items = getKlassItems(klass, removePathPrefix, ignoreFiles, ignoreItems, generateDeprecated);
+			var items = getKlassItems(klass);
 			items.properties = uniqueItems(items.properties);
 			items.methods = uniqueItems(items.methods);
 			
@@ -82,16 +106,16 @@ class Processor
 				
 				return "typedef " + eventClassName + " =" + bracket + "\n" + item.params.map(function(p)
 				{
-					return "\tvar " + p.name + space + ":" + space + getHaxeType(item.module, typeMap, p.type) + ";";
+					return "\tvar " + p.name + space + ":" + space + getHaxeType(item.module, p.type) + ";";
 				}
 				).join("\n") + "\n}\n";
 			}
 			).join("\n");
 			
-			var propertiesCode = items.properties.map(function(item) return getPropertyCode(items.properties.concat(items.methods), item, itemDeclarationPrefx, space, typeMap)).join("\n");
+			var propertiesCode = items.properties.map(function(item) return getPropertyCode(items.properties.concat(items.methods), item)).join("\n");
 			
 			if (sortItems) items.methods.sort(function(a, b) return a.name<b.name ? -1 : (a.name>b.name ? 1 : 0));
-			var methodsCode = items.methods.map(function(item) return getMethodCode(items.properties.concat(items.methods), item, itemDeclarationPrefx, space, typeMap)).join("\n");
+			var methodsCode = items.methods.map(function(item) return getMethodCode(items.properties.concat(items.methods), item)).join("\n");
 			
 			var eventsCode = items.events.filter(function(item) return !isEventOverride(item)).map(function(item)
 			{
@@ -135,17 +159,17 @@ class Processor
 			if (klassDescriptionCode != "") result.push(klassDescriptionCode);
 			
 			if (!applyNativePackage) result.push("@:native(\"" + (nativePackage != "" ? nativePackage + "." : "") + klass.name + "\")");
-			result.push("extern class " + klass.name + (klass.getExtends() != null && klass.getExtends() != "" ? " extends " + getHaxeType(klass.module, typeMap, klass.getExtends()) : "") + bracket);
+			result.push("extern class " + klass.name + (klass.getExtends() != null && klass.getExtends() != "" ? " extends " + getHaxeType(klass.module, klass.getExtends()) : "") + bracket);
 			
 			var innerClassCode = "";
 			if (constructorFirst)
 			{
-				if (klass.is_constructor == 1)	innerClassCode += getConstructorCode(items.properties.concat(items.methods), klass, itemDeclarationPrefx, space, typeMap);
+				if (klass.is_constructor == 1)	innerClassCode += getConstructorCode(items.properties.concat(items.methods), klass);
 			}
 			if (propertiesCode != "")			innerClassCode += propertiesCode + "\n\n";
 			if (!constructorFirst)
 			{
-				if (klass.is_constructor == 1)	innerClassCode += getConstructorCode(items.properties.concat(items.methods), klass, itemDeclarationPrefx, space, typeMap);
+				if (klass.is_constructor == 1)	innerClassCode += getConstructorCode(items.properties.concat(items.methods), klass);
 			}
 			if (methodsCode != "")				innerClassCode += methodsCode + "\n\n";
 			if (eventsCode != "")				innerClassCode += eventsCode + "\n\n";
@@ -161,7 +185,7 @@ class Processor
 		}
 	}
 	
-	function applySpecifyTypes(specifyTypes:Map<String, String>)
+	function applySpecifyTypes()
 	{
 		trace("applySpecifyTypes: " + Std.array(specifyTypes.keys()));
 		
@@ -210,14 +234,7 @@ class Processor
 		}
 	}
 	
-	function getKlassItems(
-		  klass : Klass
-		, removePathPrefix : String
-		, ignoreFiles : Array<String>
-		, ignoreItems : Array<String>
-		, generateDeprecated : Bool
-	)
-	: { properties:Array<Item>, methods:Array<Item>, events:Array<Item> }
+	function getKlassItems(klass:Klass) : { properties:Array<Item>, methods:Array<Item>, events:Array<Item> }
 	{
 		var properties = new Array<Item>();
 		var methods = new Array<Item>();
@@ -361,7 +378,7 @@ class Processor
 				var mixKlass : Klass = Reflect.field(root.classes, mixKlassName);
 				if (mixKlass != null)
 				{
-					var mixMethods = getKlassItems(mixKlass, removePathPrefix, ignoreFiles, ignoreItems, generateDeprecated).methods;
+					var mixMethods = getKlassItems(mixKlass).methods;
 					for (mixMethod in mixMethods)
 					{
 						if (!methods.exists(function(m) return m.name == mixMethod.name))
@@ -463,7 +480,7 @@ class Processor
 		return null;
 	}
 	
-	function getHaxeType(curModule:String, typeMap:Map<String,String>, type:String) : String
+	function getHaxeType(curModule:String, type:String) : String
 	{
 		type = type.replace(" ", "");
 		if (type.startsWith("{") && type.endsWith("}")) type = type.substr(1, type.length - 2);
@@ -487,13 +504,13 @@ class Processor
 		var reTypedArray = ~/^array\[(.*)\]$/;
 		if (reTypedArray.match(ltype))
 		{
-			return "Array<" + getHaxeType(curModule, typeMap, reTypedArray.matched(1)) + ">";
+			return "Array<" + getHaxeType(curModule, reTypedArray.matched(1)) + ">";
 		}
 		
 		return type;
 	}
 	
-	function getParamsCode(item:Item, typeMap:Map<String,String>)
+	function getParamsCode(item:Item)
 	{
 		if (item.params != null)
 		{
@@ -505,7 +522,7 @@ class Processor
 				}
 				return (p.isOptional() ? "?" : "")
 					+ fixKeyword(p.name) + ":" 
-					+ (p.type != null ? getHaxeType(item.module, typeMap, p.type) : "Dynamic");
+					+ (p.type != null ? getHaxeType(item.module, p.type) : "Dynamic");
 			});
 			return "(" + ss.join(", ") + ")";
 		}
@@ -541,19 +558,19 @@ class Processor
 		});
 	}
 	
-	function getConstructorCode(items:Array<Item>, klass:Klass, itemDeclarationPrefx:String, space:String, typeMap:Map<String,String>) : String
+	function getConstructorCode(items:Array<Item>, klass:Klass) : String
 	{
-		return getMethodCode(items, cast { name:"new", "return":{ type:"Void" }, params:klass.params }, itemDeclarationPrefx, space, typeMap) + "\n\n";
+		return getMethodCode(items, cast { name:"new", "return":{ type:"Void" }, params:klass.params }) + "\n\n";
 	}
 	
-	function getPropertyCode(items:Array<Item>, item:Item, itemDeclarationPrefx:String, space:String, typeMap:Map<String,String>)
+	function getPropertyCode(items:Array<Item>, item:Item)
 	{
 		if (item.type == null)
 		{
 			throw "Unknow type for property = " + item;
 		}
 		
-		var haxeType = getHaxeType(item.module, typeMap, item.type);
+		var haxeType = getHaxeType(item.module, item.type);
 		
 		if (item.isStatic() || !items.exists(function(i) return i.name == item.name && i.isStatic()))
 		{
@@ -576,7 +593,7 @@ class Processor
 		}
 	}
 	
-	function getMethodCode(items:Array<Item>, item:Item, itemDeclarationPrefx:String, space:String, typeMap:Map<String,String>)
+	function getMethodCode(items:Array<Item>, item:Item)
 	{
 		var ret = item.getReturn();
 		if (ret == null)
@@ -590,7 +607,7 @@ class Processor
 		try
 		{
 			
-			var retHaxeType = ret != null ? getHaxeType(item.module, typeMap, ret.type) : "Void";
+			var retHaxeType = ret != null ? getHaxeType(item.module, ret.type) : "Void";
 			
 			if (item.isStatic() || !items.exists(function(i) return i.name == item.name && i.isStatic()))
 			{
@@ -599,7 +616,7 @@ class Processor
 					+ (isMethodOverride(item) ? "override " : "") 
 					+ itemDeclarationPrefx 
 					+ (item.isStatic() ? "static " : "") 
-					+ "function " + item.name + getParamsCode(item, typeMap) + space + ":" + space + retHaxeType + ";";
+					+ "function " + item.name + getParamsCode(item) + space + ":" + space + retHaxeType + ";";
 			}
 			else
 			{
@@ -607,7 +624,7 @@ class Processor
 					+ "\t" 
 					+ itemDeclarationPrefx 
 					+ "inline "
-					+ "function " + item.name + "_" + getParamsCode(item, typeMap) + space + ":" + space + retHaxeType
+					+ "function " + item.name + "_" + getParamsCode(item) + space + ":" + space + retHaxeType
 					+ (retHaxeType != "Void" ? " return" : "")
 					+ " Reflect.callMethod(this, \"" + item.name + "\", [ " + (item.params != null ? item.params.map(function(p) return p.name).join(", ") : "") + " ]);";
 			}
