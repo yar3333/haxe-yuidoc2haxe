@@ -38,7 +38,7 @@ class Main
 		if (args.length > 0)
 		{
 			var options = parser.parse(args);
-			new Processor
+			var processor = new Processor
 			(
 				  options.get("srcJsonFilePath")
 				, options.get("destDir")
@@ -58,6 +58,7 @@ class Main
 				, options.get("constructorFirst")
 				, options.get("applyNativePackage")
 			);
+			processor.run();
 		}
 		else
 		{
