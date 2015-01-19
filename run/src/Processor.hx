@@ -677,7 +677,14 @@ class Processor
 	{
 		var klass : Klass = Reflect.field(root.classes, klassName);
 		if (klass == null) return klassName;
-		return (klass.module != curModule && klass.module != null && klass.module != "" ? klass.module.toLowerCase() + "." : "") + klassName;
+		
+		var pack = "";
+		if (!applyNativePackage)
+		{
+			if (klass.module != curModule && klass.module != null) pack = klass.module.toLowerCase();
+		}
+		
+		return (pack != "" ? pack + "." : "") + klassName;
 	}
 	
 	function getChildClasses(klassName:String) : Array<Klass>
