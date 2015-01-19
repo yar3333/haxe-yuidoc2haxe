@@ -42,13 +42,13 @@ class Processor
 		, ignoreItems : Array<String>
 		, noDescriptions : Bool
 		, nativePackage : String
+		, applyNativePackage : Bool
 		, generateDeprecated : Bool
 		, specifyTypes : Array<String>
 		, noNewLineOnBracket : Bool
 		, lessSpaces : Bool
 		, sortItems : Bool
 		, constructorFirst : Bool
-		, applyNativePackage : Bool
 	)
 	{
 		this.root = Json.parse(File.getContent(srcJsonFilePath));
@@ -61,13 +61,13 @@ class Processor
 		this.ignoreItems = ignoreItems;
 		this.noDescriptions = noDescriptions;
 		this.nativePackage = nativePackage;
+		this.applyNativePackage = applyNativePackage;
 		this.generateDeprecated = generateDeprecated;
 		this.specifyTypes = new Map<String,String>(); for (s in specifyTypes) this.specifyTypes.set(s.split("-")[0], s.split("-")[1]);
 		this.bracket = noNewLineOnBracket ? " {\n" : "\n{";
 		this.space = lessSpaces ? "" : " ";
 		this.sortItems = sortItems;
 		this.constructorFirst = constructorFirst;
-		this.applyNativePackage = applyNativePackage;
 	}
 	
 	public function run()

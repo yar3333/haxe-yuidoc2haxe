@@ -27,13 +27,13 @@ class Main
 		parser.addRepeatable("ignoreItems", String, [ "-iitem", "--ignore-items" ], "Class member to ignore. Masks with '*' is supported.");
 		parser.add("noDescriptions", false, [ "-nd", "--no-descriptions" ], "Do not generate descriptions.");
 		parser.add("nativePackage", "", [ "-np", "--native-package" ], "Native package for @:native meta.");
+		parser.add("applyNativePackage", false, [ "-anp", "--apply-native-package" ], "Use native package specified by '-np' as haxe package and don't generate @:native meta.");
 		parser.add("generateDeprecated", false, [ "--generate-deprecated" ], "Generate deprecated classes/members.");
 		parser.addRepeatable("specifyTypes", String, [ "-st", "--specify-type" ], "Specify method's param type. Example: CreateJS.hitTest.x-Float");
 		parser.add("noNewLineOnBracket", false, [ "--no-new-line-on-bracket" ], "Output code style. Generate '{' on the same line.");
 		parser.add("lessSpaces", false, [ "--less-spaces" ], "Output code style. Generate less spaces.");
 		parser.add("sortItems", false, [ "--sort-items" ], "Output code style. Sort items alphabetically.");
 		parser.add("constructorFirst", false, [ "--constructor-first" ], "Output code style. Place constructor first.");
-		parser.add("applyNativePackage", false, [ "-anp", "--apply-native-package" ], "Use native package specified by '-np' as haxe package and don't generate @:native meta.");
 		
 		if (args.length > 0)
 		{
@@ -50,13 +50,13 @@ class Main
 				, options.get("ignoreItems")
 				, options.get("noDescriptions")
 				, options.get("nativePackage")
+				, options.get("applyNativePackage")
 				, options.get("generateDeprecated")
 				, options.get("specifyTypes")
 				, options.get("noNewLineOnBracket")
 				, options.get("lessSpaces")
 				, options.get("sortItems")
 				, options.get("constructorFirst")
-				, options.get("applyNativePackage")
 			);
 			processor.run();
 		}
