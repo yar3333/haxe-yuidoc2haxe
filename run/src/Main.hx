@@ -1,15 +1,5 @@
-import hant.Log;
 import hant.CmdOptions;
-import haxe.CallStack;
-import haxe.io.Path;
-import haxe.Json;
 import neko.Lib;
-import stdlib.Std;
-import sys.FileSystem;
-import sys.io.File;
-using StringTools;
-using Tools;
-using Lambda;
 
 class Main
 {
