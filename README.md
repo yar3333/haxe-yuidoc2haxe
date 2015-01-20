@@ -7,7 +7,7 @@ haxelib run yuidoc2haxe [<options>] <destDir>
 
 ### Options ###
 ```
-#!sh
+#!text
 -src, --source                 Source yuidoc json file path. Default is 'out/data.json'.
 -pprefix, --remove-path-prefix Source files path prefix to remove. Specify here base source directory (same as for yuidoc).
 -tm, --type-map                Map basic types in form 'from-to'. For example: Boolean-Bool
