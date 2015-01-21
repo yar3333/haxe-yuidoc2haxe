@@ -10,8 +10,6 @@ using Tools;
 
 class Processor
 {
-	static var log = new Log();
-	
 	var root : YuiDoc;
 	var destDir : String;
 	var removePathPrefix : String;
@@ -76,13 +74,13 @@ class Processor
 		
 		for (className in Reflect.fields(root.classes))
 		{
-			log.start("Process class " + className);
+			Log.start("Process class " + className);
 			
 			var klass : Klass = Reflect.field(root.classes, className);
 			
 			if (isIgnore(ignoreClasses, klass.module, className) || (!generateDeprecated && klass.deprecated))
 			{
-				log.finishOk("SKIP");
+				Log.finishSuccess("SKIP");
 				continue;
 			}
 			
@@ -90,7 +88,7 @@ class Processor
 			if (file.startsWith(removePathPrefix)) file = file.substr(removePathPrefix.length);
 			if (ignoreFiles.has(file))
 			{
-				log.finishOk("SKIP");
+				Log.finishSuccess("SKIP");
 				continue;
 			}
 			file = Path.withoutExtension(file) + ".hx";
@@ -131,7 +129,7 @@ class Processor
 					else
 					{
 						eventClassName = "Dynamic";
-						log.trace("Warning: unknow params for event '" + item.name + "' (" + item.file + " : " + item.line + ").");
+						Log.echo("Warning: unknow params for event '" + item.name + "' (" + item.file + " : " + item.line + ").");
 					}
 				}
 				
@@ -181,7 +179,7 @@ class Processor
 			FileSystem.createDirectory(destFileDir);
 			File.saveContent(Path.join([ destFileDir, klass.name + ".hx"]), result.join("\n").replace("\n", "\r\n"));
 			
-			log.finishOk();
+			Log.finishSuccess();
 		}
 	}
 	
@@ -273,7 +271,7 @@ class Processor
 				{
 					if (item.description != null && (item.description.indexOf("#property") >= 0 || item.description.indexOf("#method") >= 0)) continue;
 					
-					log.trace("Warning: unknow item name, so useful var/method may be ignored (" + item.file + " : " + item.line + ").");
+					Log.echo("Warning: unknow item name, so useful var/method may be ignored (" + item.file + " : " + item.line + ").");
 					continue;
 				}
 				
@@ -428,7 +426,7 @@ class Processor
 			{
 				if (![ "Array" ].has(superKlassName))
 				{
-					log.trace("Warning: class '" + superKlassName + "' is not found.");
+					Log.echo("Warning: class '" + superKlassName + "' is not found.");
 				}
 				return;
 			}
@@ -516,7 +514,7 @@ class Processor
 			{
 				if (p.type == null)
 				{
-					log.trace("Warning: method's param type not specified (" + item.module+"." + item.name+"." + p.name+").");
+					Log.echo("Warning: method's param type not specified (" + item.module+"." + item.name+"." + p.name+").");
 				}
 				return (p.isOptional() ? "?" : "")
 					+ fixKeyword(p.name) + ":" 
@@ -596,7 +594,7 @@ class Processor
 		var ret = item.getReturn();
 		if (ret == null)
 		{
-			log.trace("Warning: unknow return for method '" + item.name + "'.");
+			Log.echo("Warning: unknow return for method '" + item.name + "'.");
 		}
 		if (ret != null && ret.type == null)
 		{
@@ -737,7 +735,7 @@ class Processor
 			var prevItems = items.slice(0, i);
 			if (prevItems.exists(function(item) return items[i].name == item.name))
 			{
-				log.trace("Warning item '" + items[i].name + "' defined several times. Used last define.");
+				Log.echo("Warning item '" + items[i].name + "' defined several times. Used last define.");
 				var len = items.length;
 				items = prevItems.filter(function(item) return items[i].name != item.name).concat(items.slice(i));
 				i -= len - items.length;
