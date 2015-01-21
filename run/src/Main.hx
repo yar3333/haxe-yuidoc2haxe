@@ -1,4 +1,5 @@
 import hant.CmdOptions;
+import hant.Log;
 import neko.Lib;
 
 class Main
@@ -15,6 +16,8 @@ class Main
 			Lib.println("run this program via haxelib utility.");
 			Sys.exit(1);
 		}
+		
+		Log.instance = new Log();
 		
 		var parser = new CmdOptions();
 		parser.add("destDir", "library", null, "Output directory.");
