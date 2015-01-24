@@ -1,5 +1,5 @@
 import hant.Log;
-import haxe.io.Path;
+import hant.Path;
 import haxe.Json;
 import stdlib.Std;
 import sys.FileSystem;
