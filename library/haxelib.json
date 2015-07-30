@@ -4,8 +4,8 @@
   "tags": ["utility"],
   "description": "Haxe extern classes generating tool. Use yuidoc's json as a source.",
   "contributors": ["yar3333"],
-  "releasenote": "Minor readme fix.",
-  "version": "1.5.4",
+  "releasenote": "README fix.",
+  "version": "1.5.5",
   "url": "https://bitbucket.org/yar3333/haxe-yuidoc2haxe",
   "dependencies": {}
 }
