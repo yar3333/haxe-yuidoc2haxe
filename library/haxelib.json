@@ -6,6 +6,6 @@
   "contributors": ["yar3333"],
   "releasenote": "README fix.",
   "version": "1.5.5",
-  "url": "https://bitbucket.org/yar3333/haxe-yuidoc2haxe",
+  "url": "https://github.com/yar3333/haxe-yuidoc2haxe",
   "dependencies": {}
 }
