@@ -1,0 +1,4 @@
+--neko library/run.n
+--class-path run/src
+--library hant
+--main Main

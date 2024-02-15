@@ -439,7 +439,7 @@ class Processor
 					item.setReturn(superItem.getReturn());
 				}
 				else
-				if (item.getReturn().type != superItem.getReturn().type)
+				if (superItem.getReturn() != null && item.getReturn().type != superItem.getReturn().type)
 				{
 					item.getReturn().type = superItem.getReturn().type;
 				}
@@ -578,8 +578,6 @@ class Processor
 		}
 		else
 		{
-			
-			
 			return getDescriptionCode(item) 
 				+ "\t" 
 				+ itemDeclarationPrefx 
@@ -598,14 +596,13 @@ class Processor
 		}
 		if (ret != null && ret.type == null)
 		{
-			throw "Unknow return type for method = " + item;
+            //throw "Unknow return type for method = " + item;
 		}
 		try
 		{
+			var retHaxeType = ret != null && ret.type != null ? getHaxeType(item.module, ret.type) : "Void";
 			
-			var retHaxeType = ret != null ? getHaxeType(item.module, ret.type) : "Void";
-			
-			if (item.isStatic() || !items.exists(function(i) return i.name == item.name && i.isStatic()))
+			if (item.isStatic() || !items.exists(x -> x.name == item.name && x.isStatic()))
 			{
 				return getDescriptionCode(item) 
 					+ "\t" 
@@ -622,7 +619,7 @@ class Processor
 					+ "inline "
 					+ "function " + item.name + "_" + getParamsCode(item) + space + ":" + space + retHaxeType
 					+ (retHaxeType != "Void" ? " return" : "")
-					+ " Reflect.callMethod(this, \"" + item.name + "\", [ " + (item.params != null ? item.params.map(function(p) return p.name).join(", ") : "") + " ]);";
+					+ " Reflect.callMethod(this, \"" + item.name + "\", [ " + (item.params != null ? item.params.map(p -> p.name).join(", ") : "") + " ]);";
 			}
 		}
 		catch (e:Dynamic)
